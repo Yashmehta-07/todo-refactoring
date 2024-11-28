@@ -1,0 +1,10 @@
+version: "3"
+services:
+    postgresql:
+        image: postgres:latest
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: rx
+            POSTGRES_DB: todo
+        ports:
+            - "5433:5432"
