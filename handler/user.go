@@ -1,14 +1,14 @@
 package handler
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	_ "fmt"
 	"net/http"
 	"time"
 	"todo/database"
+	dbhelper "todo/database/dbHelper"
 
 	_ "github.com/lib/pq" // Import pq driver
 	// "fmt"
@@ -18,22 +18,6 @@ import (
 type User struct {
 	Username string `json:"Username"`
 	Password string `json:"Password"`
-}
-
-// // db variable to store the database
-// var db *sql.DB
-
-// func UserSetDB(database *sql.DB) {
-// 	db = database
-// }
-
-// Generate a random session ID
-func generateSessionID() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(b), nil
 }
 
 // Register
@@ -76,8 +60,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//fetching data
-	var username, password string
-	err = database.TODO.QueryRow("SELECT username, password FROM auth WHERE username = $1 AND password = $2", user.Username, user.Password).Scan(&username, &password)
+	var username string
+	err = database.TODO.Get(&username, "SELECT username FROM auth WHERE username = $1 AND password = $2", user.Username, user.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "User not found", http.StatusNotFound)
@@ -88,11 +72,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//generating session
-	session_id, err := generateSessionID()
+	session_id, err := dbhelper.GenerateSessionID()
 	if err != nil {
 		http.Error(w, "Error generating session", http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Print(session_id)
 
 	//insertion
 	_, err = database.TODO.Exec("INSERT INTO session (session_id,username,created_at) VALUES ($1, $2, $3)", session_id, user.Username, time.Now().UTC())

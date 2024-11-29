@@ -8,13 +8,6 @@ import (
 	"todo/handler"
 )
 
-// db variable to store the database
-// var db *sql.DB
-
-// func MiddlewareSetDB(database *sql.DB) {
-// 	db = database
-// }
-
 // middlewares
 func Caller(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -30,11 +23,12 @@ func Caller(next http.Handler) http.Handler {
 		sessionID := cookie.Value
 
 		//fetching data
-		var (
-			username   string
-			created_at time.Time
-		)
-		err = database.TODO.QueryRow("SELECT username, created_at FROM session WHERE session_id = $1", sessionID).Scan(&username, &created_at)
+		data := struct {
+			Username   string    `db:"username"`
+			Created_at time.Time `db:"created_at"`
+		}{}
+
+		err = database.TODO.Get(&data, "SELECT username, created_at FROM session WHERE session_id = $1", sessionID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "User not found", http.StatusNotFound)
@@ -44,7 +38,7 @@ func Caller(next http.Handler) http.Handler {
 			return
 		}
 
-		duration := time.Now().UTC().Sub(created_at) //time.Since(created_at)
+		duration := time.Now().UTC().Sub(data.Created_at) //time.Since(created_at)
 		if duration >= 1*time.Hour {
 			handler.Logout(w, r)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)

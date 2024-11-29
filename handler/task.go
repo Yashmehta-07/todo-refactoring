@@ -3,7 +3,7 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
+	_ "log"
 	"net/http"
 	"todo/database"
 )
@@ -12,13 +12,6 @@ type Task struct {
 	Id   int    `json:"Id" db:"id"`
 	Desc string `json:"Desc" db:"description"`
 }
-
-// db variable to store the database
-// var db *sql.DB
-
-// func SetDB(database *sql.DB) {
-// 	db = database
-// }
 
 func Add(w http.ResponseWriter, r *http.Request) {
 
@@ -36,14 +29,14 @@ func Add(w http.ResponseWriter, r *http.Request) {
 
 	// extract user from db using cookie
 	username := ""
-	err = database.TODO.QueryRow("select username from session where session_id=$1", cookie.Value).Scan(&username)
+	err = database.TODO.Get(&username, "select username from session where session_id=$1", cookie.Value)
 	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// id selection
-	err = database.TODO.QueryRow(`SELECT
+	// query
+	query := `SELECT
     CASE
         WHEN (SELECT id FROM tasks WHERE id = 1 AND username = $1) IS NULL THEN 1
         ELSE
@@ -54,7 +47,10 @@ func Add(w http.ResponseWriter, r *http.Request) {
                 WHERE t2.id IS NULL
                 AND t1.username = $1
             )
-    END `, username).Scan(&newTask.Id)
+    END `
+
+	// id selection
+	err = database.TODO.Get(&newTask.Id, query, username)
 	if err != nil {
 		http.Error(w, "Error generating ID", http.StatusInternalServerError)
 		return
@@ -80,22 +76,28 @@ func Add(w http.ResponseWriter, r *http.Request) {
 func List(w http.ResponseWriter, r *http.Request) {
 
 	// extracting session id
-	cookie, _ := r.Cookie("session_id")
+	cookie, err := r.Cookie("session_id")
+	if err != nil || cookie.Value == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Define the query
+	query := `
+        SELECT t.id, t.description 
+        FROM tasks t 
+        INNER JOIN session s ON t.username = s.username 
+        WHERE s.session_id = $1
+    `
+
+	// Define a slice to store tasks
+	var tasks []Task
 
 	//fetching data
-	rows, err := database.TODO.Query("select t.id, t.description FROM tasks t join session s on t.username=s.username where s.session_id = $1", cookie.Value)
+	err = database.TODO.Select(&tasks, query, cookie.Value)
 	if err != nil {
 		http.Error(w, "Error fetching tasks", http.StatusInternalServerError)
 		return
-	}
-	defer rows.Close()
-	var tasks []Task
-	for rows.Next() {
-		var task Task
-		if err := rows.Scan(&task.Id, &task.Desc); err != nil {
-			log.Fatal(err)
-		}
-		tasks = append(tasks, task)
 	}
 
 	//response
@@ -123,7 +125,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 
 	// extract user from db using cookie
 	username := ""
-	err = database.TODO.QueryRow("select username from session where session_id=$1", cookie.Value).Scan(&username)
+	err = database.TODO.Get(&username, "select username from session where session_id=$1", cookie.Value)
 	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
@@ -174,7 +176,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 
 	// extract user from db using cookie
 	username := ""
-	err = database.TODO.QueryRow("select username from session where session_id=$1", cookie.Value).Scan(&username)
+	err = database.TODO.Get(&username, "select username from session where session_id=$1", cookie.Value)
 	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return

@@ -1,38 +1,28 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
-var TODO *sql.DB
+var TODO *sqlx.DB
 
-// Initialize Database
-func ConnectDB() *sql.DB {
+// Initialize Data1base
+func ConnectDB() *sqlx.DB {
 	//db string
 	connStr := "host=localhost port=5432 user=postgres password=rx dbname=todo-multi sslmode=disable"
+	// connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
 
 	// Open a connection
-	db, err := sql.Open("postgres", connStr)
+	db, err := sqlx.Connect("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	// Test the connection
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("Failed to connect to the database:", err)
-	}
-
-	// Ensure the connection is not nil
-	if db == nil {
-		log.Fatal("Database connection is nil")
 	}
 
 	fmt.Println("Connected to the database successfully!")
@@ -50,8 +40,8 @@ func ConnectDB() *sql.DB {
 
 }
 
-func migrateUp(db *sql.DB) error {
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+func migrateUp(db *sqlx.DB) error {
+	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -18,7 +18,7 @@ CREATE TABLE tasks (
 CREATE TABLE session (
     username VARCHAR(100) NOT NULL,
     session_id VARCHAR(200) PRIMARY KEY,
-    create_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL,
     FOREIGN KEY (username) REFERENCES auth(username)
 );
 
