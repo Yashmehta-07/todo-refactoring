@@ -20,7 +20,17 @@ type User struct {
 	Password string `json:"Password"`
 }
 
-// Register
+// Register godoc
+// @Summary Register a new user
+// @Description Create a new user with a username and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body User true "User registration data"
+// @Success 200 {object} map[string]interface{} "Registration successful"
+// @Failure 400 {object} map[string]string "Invalid username or password"
+// @Failure 500 {object} map[string]string "Error inserting user or user already exists"
+// @Router /register [post]
 func Register(w http.ResponseWriter, r *http.Request) {
 
 	//request
@@ -51,7 +61,18 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// Login
+// Login godoc
+// @Summary Login a user
+// @Description Authenticate a user and create a session
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body User true "User login credentials"
+// @Success 200 {object} map[string]interface{} "Login successful"
+// @Failure 400 {object} map[string]string "Invalid username or password"
+// @Failure 404 {object} map[string]string "User not found"
+// @Failure 500 {object} map[string]string "Error logging in"
+// @Router /login [post]
 func Login(w http.ResponseWriter, r *http.Request) {
 
 	//request
@@ -113,6 +134,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	logging.Log(err, "login successfull", "info", 200, r)
 
 }
+
+// Logout godoc
+// @Summary Logout a user
+// @Description Logout a user by invalidating their session
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Logout successful"
+// @Failure 401 {object} map[string]string "Already logged out or invalid session"
+// @Failure 500 {object} map[string]string "Error deleting session"
+// @Router /logout [post]
 
 // Logout
 

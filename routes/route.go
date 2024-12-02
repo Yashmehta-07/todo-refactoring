@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func Route() chi.Router {
@@ -28,6 +29,9 @@ func Route() chi.Router {
 			r.Delete("/", handler.Delete)
 		})
 	})
+
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
+
 	// r.Get("/tasks", middlewares.Caller(handler.List))
 	// r.Post("/tasks", middlewares.Caller(handler.Add))
 	// r.Put("/tasks", middlewares.Caller(handler.Update))

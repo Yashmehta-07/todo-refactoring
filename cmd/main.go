@@ -8,9 +8,16 @@ import (
 	"todo/logging"
 	"todo/routes"
 
+	_ "todo/docs"
+
 	_ "github.com/lib/pq" // Import pq driver
 )
 
+// @title           To-Do API
+// @version         1.0
+// @description     A brief description of your API
+// @host            localhost:8000
+// @BasePath        /
 func main() {
 
 	//initializing database

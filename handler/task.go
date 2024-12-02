@@ -14,6 +14,18 @@ type Task struct {
 	Desc string `json:"Desc" db:"description"`
 }
 
+// Add godoc
+// @Summary Add a new task
+// @Description Add a new task for the logged-in user
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param task body Task true "Task to add"
+// @Success 200 {object} map[string]interface{} "Task added successfully"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Error adding task"
+// @Router /tasks [post]
 func Add(w http.ResponseWriter, r *http.Request) {
 
 	//request
@@ -80,6 +92,16 @@ func Add(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// List godoc
+// @Summary List all tasks
+// @Description Get all tasks for the logged-in user
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Success 200 {object} []Task "Tasks fetched successfully"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Error fetching tasks"
+// @Router /tasks [get]
 func List(w http.ResponseWriter, r *http.Request) {
 
 	// extracting session id
@@ -121,6 +143,19 @@ func List(w http.ResponseWriter, r *http.Request) {
 	logging.Log(err, "Tasks fetched successfully", "info", 200, r)
 }
 
+// Update godoc
+// @Summary Update a task
+// @Description Update the description of an existing task
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param task body Task true "Task to update"
+// @Success 200 {object} map[string]interface{} "Task updated successfully"
+// @Failure 400 {object} map[string]string "Invalid task ID or description"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "Task not found"
+// @Failure 500 {object} map[string]string "Error updating task"
+// @Router /tasks [put]
 func Update(w http.ResponseWriter, r *http.Request) {
 
 	//extracting id from body
@@ -178,6 +213,19 @@ func Update(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Delete godoc
+// @Summary Delete a task
+// @Description Delete a task by its ID
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param task body Task true "Task to delete"
+// @Success 200 {object} map[string]string "Task deleted successfully"
+// @Failure 400 {object} map[string]string "Invalid task ID"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "Task not found"
+// @Failure 500 {object} map[string]string "Error deleting task"
+// @Router /tasks [delete]
 func Delete(w http.ResponseWriter, r *http.Request) {
 
 	//extracting id from body
