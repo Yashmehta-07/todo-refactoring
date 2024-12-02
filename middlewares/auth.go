@@ -6,18 +6,18 @@ import (
 	"time"
 	"todo/database"
 	"todo/handler"
+	"todo/logging"
 )
 
 // middlewares
 func Caller(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// db := utils.GetDB()
-		// fmt.Print(db)
 		//session check
 		cookie, err := r.Cookie("session_id")
 		if err != nil || cookie.Value == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			logging.Log(err, "Unauthorized", "warning", 401, r)
 			return
 		}
 		sessionID := cookie.Value
@@ -32,9 +32,11 @@ func Caller(next http.Handler) http.Handler {
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "User not found", http.StatusNotFound)
+				logging.Log(err, "User not found", "warning", 404, r)
 				return
 			}
 			http.Error(w, "Error fetching tasks", http.StatusInternalServerError)
+			logging.Log(err, "Error fetching tasks", "warning", 500, r)
 			return
 		}
 
@@ -42,6 +44,7 @@ func Caller(next http.Handler) http.Handler {
 		if duration >= 1*time.Hour {
 			handler.Logout(w, r)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			logging.Log(err, "Unauthorized", "warning", 401, r)
 			return
 
 		}

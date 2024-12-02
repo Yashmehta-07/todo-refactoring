@@ -13,7 +13,7 @@ func Route() chi.Router {
 	r := chi.NewRouter()
 
 	//middlewares
-	r.Use(middleware.Logger)
+	// r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	// r.Use(caller)
 	r.Route("/", func(r chi.Router) {

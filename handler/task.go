@@ -6,6 +6,7 @@ import (
 	_ "log"
 	"net/http"
 	"todo/database"
+	"todo/logging"
 )
 
 type Task struct {
@@ -21,6 +22,7 @@ func Add(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil || newTask.Desc == "" {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
+		logging.Log(err, "Invalid request", "warning", 400, r)
 		return
 	}
 
@@ -32,6 +34,7 @@ func Add(w http.ResponseWriter, r *http.Request) {
 	err = database.TODO.Get(&username, "select username from session where session_id=$1", cookie.Value)
 	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		logging.Log(err, "unauthorized", "error", 401, r)
 		return
 	}
 
@@ -53,6 +56,7 @@ func Add(w http.ResponseWriter, r *http.Request) {
 	err = database.TODO.Get(&newTask.Id, query, username)
 	if err != nil {
 		http.Error(w, "Error generating ID", http.StatusInternalServerError)
+		logging.Log(err, "Error generating ID", "error", 500, r)
 		return
 	}
 
@@ -60,6 +64,7 @@ func Add(w http.ResponseWriter, r *http.Request) {
 	_, err = database.TODO.Exec("INSERT INTO tasks (id,description,username) VALUES ($1, $2, $3)", newTask.Id, newTask.Desc, username)
 	if err != nil {
 		http.Error(w, "Error inserting task", http.StatusInternalServerError)
+		logging.Log(err, "Error inserting task", "error", 500, r)
 		return
 	}
 
@@ -71,6 +76,8 @@ func Add(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(response)
 
+	logging.Log(err, "Task added successfully!", "info", 200, r)
+
 }
 
 func List(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +86,7 @@ func List(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil || cookie.Value == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		logging.Log(err, "Unauthorized", "warning", 401, r)
 		return
 	}
 
@@ -97,6 +105,7 @@ func List(w http.ResponseWriter, r *http.Request) {
 	err = database.TODO.Select(&tasks, query, cookie.Value)
 	if err != nil {
 		http.Error(w, "Error fetching tasks", http.StatusInternalServerError)
+		logging.Log(err, "Error fetching tasks", "error", 500, r)
 		return
 	}
 
@@ -104,9 +113,12 @@ func List(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if len(tasks) == 0 {
 		json.NewEncoder(w).Encode(map[string]string{"message": "No Task Found"})
+		logging.Log(err, "No Task Found", "info", 200, r)
 		return
 	}
 	json.NewEncoder(w).Encode(tasks)
+
+	logging.Log(err, "Tasks fetched successfully", "info", 200, r)
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +129,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	id := newTask.Id
 	if err != nil || id <= 0 || newTask.Desc == "" {
 		http.Error(w, "Invalid task ID or description", http.StatusBadRequest)
+		logging.Log(err, "Invalid task ID or description", "warning", 400, r)
 		return
 	}
 
@@ -128,6 +141,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	err = database.TODO.Get(&username, "select username from session where session_id=$1", cookie.Value)
 	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		logging.Log(err, "unauthorized", "error", 401, r)
 		return
 	}
 
@@ -136,6 +150,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	result, err = database.TODO.Exec("UPDATE tasks SET description = $2 WHERE id = $1 and username = $3", newTask.Id, newTask.Desc, username)
 	if err != nil {
 		http.Error(w, "Error updating task", http.StatusInternalServerError)
+		logging.Log(err, "Error updating task", "error", 500, r)
 		return
 	}
 
@@ -143,10 +158,12 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		http.Error(w, "Error getting rows affected", http.StatusInternalServerError)
+		logging.Log(err, "Error getting rows affected", "error", 500, r)
 		return
 	}
 	if rowsAffected == 0 {
 		http.Error(w, "Task not found", http.StatusNotFound)
+		logging.Log(err, "Task not found", "warning", 404, r)
 		return
 	}
 
@@ -156,6 +173,8 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		"message": "Task updated successfully!",
 		"task":    newTask,
 	})
+
+	logging.Log(err, "Task updated successfully!", "info", 200, r)
 
 }
 
@@ -168,6 +187,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		logging.Log(err, "Invalid task ID", "warning", 400, r)
 		return
 	}
 
@@ -179,6 +199,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	err = database.TODO.Get(&username, "select username from session where session_id=$1", cookie.Value)
 	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		logging.Log(err, "unauthorized", "error", 401, r)
 		return
 	}
 
@@ -188,6 +209,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	result, err = database.TODO.Exec("DELETE FROM tasks WHERE id = $1 and username = $2", id, username)
 	if err != nil {
 		http.Error(w, "Error deleting task", http.StatusInternalServerError)
+		logging.Log(err, "Error deleting task", "error", 500, r)
 		return
 	}
 
@@ -195,15 +217,19 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		http.Error(w, "Error getting rows affected", http.StatusInternalServerError)
+		logging.Log(err, "Error getting rows affected", "error", 500, r)
 		return
 	}
 	if rowsAffected == 0 {
 		http.Error(w, "Task not found", http.StatusNotFound)
+		logging.Log(err, "Task not found", "warning", 404, r)
 		return
 	}
 
 	//response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "Task deleted successfully"})
+
+	logging.Log(err, "Task deleted successfully", "info", 200, r)
 
 }

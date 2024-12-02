@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	_ "strconv"
 	_ "time"
 	"todo/database"
+	"todo/logging"
 	"todo/routes"
 
 	_ "github.com/lib/pq" // Import pq driver
@@ -25,7 +24,7 @@ func main() {
 	r := routes.Route()
 
 	//server start
-	fmt.Println("Server running on http://localhost:8000")
-	log.Fatal(http.ListenAndServe(":8000", r))
+	logging.Log(nil, "Server running on http://localhost:8000", "info", 200, nil)
+	logging.Logger.Fatal(http.ListenAndServe(":8000", r))
 
 }

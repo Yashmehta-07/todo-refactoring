@@ -3,12 +3,12 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	_ "fmt"
 	"net/http"
 	"time"
 	"todo/database"
 	dbhelper "todo/database/dbHelper"
+	"todo/logging"
 
 	_ "github.com/lib/pq" // Import pq driver
 	// "fmt"
@@ -29,6 +29,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil || user.Username == "" || user.Password == "" {
 		http.Error(w, "Invalid username or password", http.StatusBadRequest)
+		logging.Log(err, "Invalid username or password", "warning", 400, r)
 		return
 	}
 
@@ -36,6 +37,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	_, err = database.TODO.Exec("INSERT INTO auth (username,password) VALUES ($1, $2)", user.Username, user.Password)
 	if err != nil {
 		http.Error(w, "Error inserting task or user already exists", http.StatusInternalServerError)
+		logging.Log(err, "Error inserting task or user already exists", "error", 500, r)
 		return
 	}
 
@@ -44,6 +46,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "success",
 	})
+
+	logging.Log(err, "success", "info", 200, r)
 
 }
 
@@ -56,6 +60,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil || user.Username == "" || user.Password == "" {
 		http.Error(w, "Invalid username or password", http.StatusBadRequest)
+		logging.Log(err, "Invalid username or password", "warning", 400, r)
 		return
 	}
 
@@ -65,9 +70,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "User not found", http.StatusNotFound)
+			logging.Log(err, "User not found", "error", 404, r)
 			return
 		}
 		http.Error(w, "Error fetching tasks", http.StatusInternalServerError)
+		logging.Log(err, "Error fetching tasks", "error", 500, r)
 		return
 	}
 
@@ -75,15 +82,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	session_id, err := dbhelper.GenerateSessionID()
 	if err != nil {
 		http.Error(w, "Error generating session", http.StatusInternalServerError)
+		logging.Log(err, "Error generating session", "error", 500, r)
 		return
 	}
-
-	fmt.Print(session_id)
 
 	//insertion
 	_, err = database.TODO.Exec("INSERT INTO session (session_id,username,created_at) VALUES ($1, $2, $3)", session_id, user.Username, time.Now().UTC())
 	if err != nil {
 		http.Error(w, "Error inserting task", http.StatusInternalServerError)
+		logging.Log(err, "Error inserting task", "error", 500, r)
 		return
 	}
 
@@ -103,6 +110,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		"message": "login successfull",
 	})
 
+	logging.Log(err, "login successfull", "info", 200, r)
+
 }
 
 // Logout
@@ -113,6 +122,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil || cookie.Value == "" {
 		http.Error(w, "already logout ", http.StatusUnauthorized)
+		logging.Log(err, "already logout ", "warning", 401, r)
 		return
 	}
 
@@ -130,6 +140,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	_, err = database.TODO.Exec("DELETE FROM session WHERE session_id = $1", cookie.Value)
 	if err != nil {
 		http.Error(w, "Error deleting session", http.StatusInternalServerError)
+		logging.Log(err, "Error deleting session", "error", 500, r)
 		return
 	}
 
@@ -139,5 +150,8 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"message": "logout successfull",
 		})
+
+		logging.Log(err, "logout successfull", "info", 200, r)
 	}
+
 }
