@@ -145,9 +145,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} map[string]string "Already logged out or invalid session"
 // @Failure 500 {object} map[string]string "Error deleting session"
 // @Router /logout [post]
-
-// Logout
-
 func Logout(w http.ResponseWriter, r *http.Request) {
 
 	// session check

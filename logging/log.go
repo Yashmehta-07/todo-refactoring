@@ -39,10 +39,10 @@ func Log(err error, message string, severity string, code int, r *http.Request) 
 
 	// Set the severity level dynamically
 	entry := Logger.WithFields(logrus.Fields{
-		"method": method,
-		"path":   path,
-		"status": code,
-		"error":  error,
+		"method":     method,
+		"path":       path,
+		"statusCode": code,
+		"error":      error,
 		// "message":  message,
 	})
 

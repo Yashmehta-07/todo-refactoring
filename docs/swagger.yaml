@@ -62,6 +62,34 @@ paths:
       summary: Login a user
       tags:
       - auth
+  /logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout a user by invalidating their session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Already logged out or invalid session
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Error deleting session
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Logout a user
+      tags:
+      - auth
   /register:
     post:
       consumes:
