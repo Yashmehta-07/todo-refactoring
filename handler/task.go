@@ -117,7 +117,7 @@ func List(w http.ResponseWriter, r *http.Request) {
         SELECT t.id, t.description 
         FROM tasks t 
         INNER JOIN session s ON t.username = s.username 
-        WHERE s.session_id = $1
+        WHERE s.session_id = $1 AND t.archive = false
     `
 
 	// Define a slice to store tasks
@@ -182,7 +182,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 
 	//updating the task
 	var result sql.Result
-	result, err = database.TODO.Exec("UPDATE tasks SET description = $2 WHERE id = $1 and username = $3", newTask.Id, newTask.Desc, username)
+	result, err = database.TODO.Exec("UPDATE tasks SET description = $2 WHERE id = $1 and username = $3 and archive = false", newTask.Id, newTask.Desc, username)
 	if err != nil {
 		http.Error(w, "Error updating task", http.StatusInternalServerError)
 		logging.Log(err, "Error updating task", "error", 500, r)
@@ -254,7 +254,8 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	//removing the task
 
 	var result sql.Result
-	result, err = database.TODO.Exec("DELETE FROM tasks WHERE id = $1 and username = $2", id, username)
+	// result, err = database.TODO.Exec("DELETE FROM tasks WHERE id = $1 and username = $2", id, username)
+	result, err = database.TODO.Exec("UPDATE tasks SET archive = true  WHERE id = $1 and username = $2 and archive = false", id, username)
 	if err != nil {
 		http.Error(w, "Error deleting task", http.StatusInternalServerError)
 		logging.Log(err, "Error deleting task", "error", 500, r)
